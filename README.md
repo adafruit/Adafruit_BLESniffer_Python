@@ -1,5 +1,5 @@
-Python API for Adafruit's Bluefruit LE Sniffer 
-==============================================
+Python API for Bluefruit LE Sniffer 
+===================================
 
 This repository contains the Python API for Adafruit's Bluefruit LE Sniffer (https://www.adafruit.com/product/2269).
 
