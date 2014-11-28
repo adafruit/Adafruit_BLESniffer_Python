@@ -22,11 +22,13 @@ The current example does not enable live streaming of data directly into Wiresha
 
 ## Using sniffer.py
 
-To use sniffer.py, simply specify the serial port where the sniffer can be found (ex. `COM14` on Windows, or `/dev/tty.usbmodem1412311` on OS X, `/dev/ttyACM0` or Linux, etc.):
+To use sniffer.py, simply specify the serial port where the sniffer can be found (ex. `COM14` on Windows, `/dev/tty.usbmodem1412311` on OS X, `/dev/ttyACM0` or Linux, etc.):
 
 ```
 python sniffer.py /dev/tty.usbmodem1412311
 ```
+
+**Note:** You will need to run python with `sudo` on Linux to allow the log file to be created, so `sudo python sniffer.py /dev/ttyACM0`, etc..
 
 This will create a new log file and start scanning for BLE devices, which should result in the following menu:
 
