@@ -1,5 +1,5 @@
 This file should be place in the ~/.wireshark/plugins folder on your OS X development machine, so 
-`~/.wireshark/plugins/bso_nordic_btle.so`.
+`~/.wireshark/plugins/nordic_btle.so`.
 
 This plugin should add the following protocol decoder option:
 
