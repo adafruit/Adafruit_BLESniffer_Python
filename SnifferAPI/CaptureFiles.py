@@ -97,7 +97,7 @@ class CaptureFileHandler:
                 
     def makePacketHeader(self, length):
         
-        timeNow = time.clock()
+        timeNow = time.time()
         
         TS_SEC         = int(timeNow)
         TS_USEC     = int((timeNow-TS_SEC)*1000000)
