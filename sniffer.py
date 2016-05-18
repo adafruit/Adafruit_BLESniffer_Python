@@ -79,6 +79,9 @@ def selectDevice(devlist):
                                                                              d.RSSI)
         try:
             i = int(raw_input("\nSelect a device to sniff, or '0' to scan again\n> "))
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
+            return None
         except:
             return None
 
