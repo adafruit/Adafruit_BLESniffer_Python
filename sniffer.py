@@ -10,6 +10,7 @@ import argparse
 
 from SnifferAPI import Logger
 from SnifferAPI import Sniffer
+from SnifferAPI import CaptureFiles
 from SnifferAPI.Devices import Device
 from SnifferAPI.Devices import DeviceList
 
@@ -123,6 +124,11 @@ if __name__ == '__main__':
                            help="serial port location ('COM14', '/dev/tty.usbserial-DN009WNO', etc.)")
 
     # Optional arguments:
+    argparser.add_argument("-l", "--logfile",
+                           dest="logfile",
+                           default=CaptureFiles.captureFilePath,
+                           help="log packets to file, default: " + CaptureFiles.captureFilePath)
+
     argparser.add_argument("-t", "--target",
                            dest="target",
                            help="target device address")
@@ -143,7 +149,8 @@ if __name__ == '__main__':
     args = argparser.parse_args()
 
     # Display the libpcap logfile location
-    print "Logging data to " + os.path.join(Logger.logFilePath, "capture.pcap")
+    print "Capturing data to " + args.logfile
+    CaptureFiles.captureFilePath = args.logfile
 
     # Try to open the serial port
     try:
