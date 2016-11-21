@@ -123,6 +123,16 @@ if __name__ == '__main__':
                            help="serial port location ('COM14', '/dev/tty.usbserial-DN009WNO', etc.)")
 
     # Optional arguments:
+    argparser.add_argument("-t", "--target",
+                           dest="target",
+                           help="target device address")
+
+    argparser.add_argument("-r", "--random_txaddr",
+                           dest="txaddr",
+                           action="store_true",
+                           default=False,
+                           help="Target device is using random address")
+
     argparser.add_argument("-v", "--verbose",
                            dest="verbose",
                            action="store_true",
@@ -142,6 +152,8 @@ if __name__ == '__main__':
         # pySerial returns an OSError if an invalid port is supplied
         print "Unable to open serial port '" + args.serialport + "'"
         sys.exit(-1)
+    except KeyboardInterrupt:
+        sys.exit(-1)
 
     # Optionally display some information about the sniffer
     if args.verbose:
@@ -151,6 +163,15 @@ if __name__ == '__main__':
     try:
         d = None
         """@type: Device"""
+        if args.target:
+            print "specified target device", args.target
+            _mac = map(lambda x: int(x, 16) , args.target.split(':'))
+            if len(_mac) != 6:
+                raise ValueError("Invalid device address")
+            # -72 seems reasonable for a target device right next to the sniffer
+            d = Device(_mac, name="NoDeviceName", RSSI=-72, txAdd=args.txaddr)
+
+        # loop will be skipped if a target device is specified on commandline
         while d is None:
             print "Scanning for BLE devices (5s) ..."
             devlist = scanForDevices()
@@ -180,7 +201,9 @@ if __name__ == '__main__':
         mySniffer.doExit()
         sys.exit()
 
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ValueError, IndexError) as e:
         # Close gracefully on CTRL+C
+        if 'KeyboardInterrupt' not in str(type(e)):
+            print "Caught exception:", e
         mySniffer.doExit()
         sys.exit(-1)
