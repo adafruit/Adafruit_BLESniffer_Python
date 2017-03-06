@@ -150,6 +150,9 @@ class SnifferCollector(Notifications.Notifier):
         while not self._exit:
             try:
                 packet = self._packetReader.getPacket(timeout = 2)
+                if packet is None:
+                    raise Exceptions.InvalidPacketException("")
+
                 if not packet.valid:
                     raise Exceptions.InvalidPacketException("")
             except Exceptions.SnifferTimeout as e:
