@@ -7,6 +7,8 @@ import os
 import sys
 import time
 import argparse
+import logging
+from sys import platform
 
 from SnifferAPI import Logger
 from SnifferAPI import Sniffer
@@ -181,6 +183,11 @@ if __name__ == '__main__':
 
     # Parser the arguments passed in from the command-line
     args = argparser.parse_args()
+
+    if args.pipe:
+        if not (platform.startswith('linux') or platform == "darwin"):
+            print "Pipes only available on MacOS and Linux"
+            sys.exit(-1)
 
     # Display the libpcap logfile location
     print "Capturing data to " + args.logfile
