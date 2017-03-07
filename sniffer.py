@@ -94,22 +94,32 @@ def selectDevice(devlist):
             # This will start a new scan
             return None
 
+def loop():
+    """Main loop printing some useful statistics"""
+    nLoops = 0
+    nPackets = 0
+    connected = False
 
-def dumpPackets():
-    """Dumps incoming packets to the display"""
-    # Get (pop) unprocessed BLE packets.
-    packets = mySniffer.getPackets()
-    # Display the packets on the screen in verbose mode
-    if args.verbose:
-        for packet in packets:
-            if packet.blePacket is not None:
-                # Display the raw BLE packet payload
-                # Note: 'BlePacket' is nested inside the higher level 'Packet' wrapper class
-                print packet.blePacket.payload
-            else:
-                print packet
-    else:
-        print '.' * len(packets)
+    while True:
+        time.sleep(0.1)
+
+        packets   = mySniffer.getPackets()
+        nLoops   += 1
+        nPackets += len(packets)
+
+        if args.verbose:
+            for packet in packets:
+                if packet.blePacket is not None:
+                    # Display the raw BLE packet payload
+                    # Note: 'BlePacket' is nested inside the higher level 'Packet' wrapper class
+                    print packet.blePacket.payload
+                else:
+                    print packet
+        else:
+            if connected != mySniffer.inConnection or nLoops % 20 == 0:
+                connected = mySniffer.inConnection
+                print "\rconnected: {}, packets: {}, missed: {}".format(mySniffer.inConnection, nPackets, mySniffer.missedPackets),
+                sys.stdout.flush()
 
 
 if __name__ == '__main__':
@@ -199,10 +209,7 @@ if __name__ == '__main__':
         else:
             print "ERROR: Could not find the selected device"
 
-        # Dump packets
-        while True:
-            dumpPackets()
-            time.sleep(1)
+        loop()
 
         # Close gracefully
         mySniffer.doExit()
