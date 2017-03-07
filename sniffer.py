@@ -14,10 +14,13 @@ from SnifferAPI import CaptureFiles
 from SnifferAPI.Devices import Device
 from SnifferAPI.Devices import DeviceList
 
+from PcapPipe import PcapPipe
 
 mySniffer = None
 """@type: SnifferAPI.Sniffer.Sniffer"""
 
+myPipe = None
+"""@type: PcapPipe.PcapPipe"""
 
 def setup(serport, delay=6):
     """
@@ -122,6 +125,21 @@ def loop():
                 sys.stdout.flush()
 
 
+def setupPipe():
+    """setup pipe"""
+    # Create a named pipe for Wireshark capture
+    pipeFilePath = os.path.join(Logger.logFilePath, "ble.pipe")
+    if os.path.exists(pipeFilePath):
+        os.remove(pipeFilePath)
+
+    print "Pipe ready, run: wireshark -Y btle -k -i %s" % os.path.abspath(pipeFilePath)
+
+    myPipe = PcapPipe()
+    myPipe.open_and_init(pipeFilePath)
+
+    mySniffer.subscribe("NEW_BLE_PACKET", myPipe.newBlePacket)
+
+
 if __name__ == '__main__':
     """Main program execution point"""
 
@@ -134,6 +152,12 @@ if __name__ == '__main__':
                            help="serial port location ('COM14', '/dev/tty.usbserial-DN009WNO', etc.)")
 
     # Optional arguments:
+    argparser.add_argument("-p", "--pipe",
+                           dest="pipe",
+                           action="store_true",
+                           default=False,
+                           help="Pipe packets to wireshark")
+
     argparser.add_argument("-l", "--logfile",
                            dest="logfile",
                            default=CaptureFiles.captureFilePath,
@@ -205,7 +229,11 @@ if __name__ == '__main__':
                                                                            "%02X" % d.address[5])
         # Make sure we actually followed the selected device (i.e. it's still available, etc.)
         if d is not None:
+            if args.pipe:
+                setupPipe()
+
             mySniffer.follow(d)
+
         else:
             print "ERROR: Could not find the selected device"
 
@@ -213,6 +241,8 @@ if __name__ == '__main__':
 
         # Close gracefully
         mySniffer.doExit()
+        if myPipe is not None:
+            myPipe.close()
         sys.exit()
 
     except (KeyboardInterrupt, ValueError, IndexError) as e:
@@ -220,4 +250,6 @@ if __name__ == '__main__':
         if 'KeyboardInterrupt' not in str(type(e)):
             print "Caught exception:", e
         mySniffer.doExit()
+        if myPipe is not None:
+            myPipe.close()
         sys.exit(-1)
