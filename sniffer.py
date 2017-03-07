@@ -7,6 +7,8 @@ import os
 import sys
 import time
 import argparse
+import logging
+from sys import platform
 
 from SnifferAPI import Logger
 from SnifferAPI import Sniffer
@@ -14,10 +16,13 @@ from SnifferAPI import CaptureFiles
 from SnifferAPI.Devices import Device
 from SnifferAPI.Devices import DeviceList
 
+from PcapPipe import PcapPipe
 
 mySniffer = None
 """@type: SnifferAPI.Sniffer.Sniffer"""
 
+myPipe = None
+"""@type: PcapPipe.PcapPipe"""
 
 def setup(serport, delay=6):
     """
@@ -94,22 +99,47 @@ def selectDevice(devlist):
             # This will start a new scan
             return None
 
+def loop():
+    """Main loop printing some useful statistics"""
+    nLoops = 0
+    nPackets = 0
+    connected = False
 
-def dumpPackets():
-    """Dumps incoming packets to the display"""
-    # Get (pop) unprocessed BLE packets.
-    packets = mySniffer.getPackets()
-    # Display the packets on the screen in verbose mode
-    if args.verbose:
-        for packet in packets:
-            if packet.blePacket is not None:
-                # Display the raw BLE packet payload
-                # Note: 'BlePacket' is nested inside the higher level 'Packet' wrapper class
-                print packet.blePacket.payload
-            else:
-                print packet
-    else:
-        print '.' * len(packets)
+    while True:
+        time.sleep(0.1)
+
+        packets   = mySniffer.getPackets()
+        nLoops   += 1
+        nPackets += len(packets)
+
+        if args.verbose:
+            for packet in packets:
+                if packet.blePacket is not None:
+                    # Display the raw BLE packet payload
+                    # Note: 'BlePacket' is nested inside the higher level 'Packet' wrapper class
+                    print packet.blePacket.payload
+                else:
+                    print packet
+        else:
+            if connected != mySniffer.inConnection or nLoops % 20 == 0:
+                connected = mySniffer.inConnection
+                print "\rconnected: {}, packets: {}, missed: {}".format(mySniffer.inConnection, nPackets, mySniffer.missedPackets),
+                sys.stdout.flush()
+
+
+def setupPipe():
+    """setup pipe"""
+    # Create a named pipe for Wireshark capture
+    pipeFilePath = os.path.join(Logger.logFilePath, "ble.pipe")
+    if os.path.exists(pipeFilePath):
+        os.remove(pipeFilePath)
+
+    print "Pipe ready, run: wireshark -Y btle -k -i %s" % os.path.abspath(pipeFilePath)
+
+    myPipe = PcapPipe()
+    myPipe.open_and_init(pipeFilePath)
+
+    mySniffer.subscribe("NEW_BLE_PACKET", myPipe.newBlePacket)
 
 
 if __name__ == '__main__':
@@ -124,6 +154,12 @@ if __name__ == '__main__':
                            help="serial port location ('COM14', '/dev/tty.usbserial-DN009WNO', etc.)")
 
     # Optional arguments:
+    argparser.add_argument("-p", "--pipe",
+                           dest="pipe",
+                           action="store_true",
+                           default=False,
+                           help="Pipe packets to wireshark")
+
     argparser.add_argument("-l", "--logfile",
                            dest="logfile",
                            default=CaptureFiles.captureFilePath,
@@ -147,6 +183,11 @@ if __name__ == '__main__':
 
     # Parser the arguments passed in from the command-line
     args = argparser.parse_args()
+
+    if args.pipe:
+        if not (platform.startswith('linux') or platform == "darwin"):
+            print "Pipes only available on MacOS and Linux"
+            sys.exit(-1)
 
     # Display the libpcap logfile location
     print "Capturing data to " + args.logfile
@@ -195,17 +236,20 @@ if __name__ == '__main__':
                                                                            "%02X" % d.address[5])
         # Make sure we actually followed the selected device (i.e. it's still available, etc.)
         if d is not None:
+            if args.pipe:
+                setupPipe()
+
             mySniffer.follow(d)
+
         else:
             print "ERROR: Could not find the selected device"
 
-        # Dump packets
-        while True:
-            dumpPackets()
-            time.sleep(1)
+        loop()
 
         # Close gracefully
         mySniffer.doExit()
+        if myPipe is not None:
+            myPipe.close()
         sys.exit()
 
     except (KeyboardInterrupt, ValueError, IndexError) as e:
@@ -213,4 +257,6 @@ if __name__ == '__main__':
         if 'KeyboardInterrupt' not in str(type(e)):
             print "Caught exception:", e
         mySniffer.doExit()
+        if myPipe is not None:
+            myPipe.close()
         sys.exit(-1)
