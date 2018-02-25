@@ -243,7 +243,8 @@ class PacketReader(Notifications.Notifier):
 
             try:
                 self.uart.ser.port = iPort
-                self.uart.ser.open()
+                if not self.uart.ser.isOpen():
+                    self.uart.ser.open()
                 self.sendPingReq()
                 startTime = time.time()
                 continueLoop = True
