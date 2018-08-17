@@ -119,7 +119,8 @@ class PacketReader(Notifications.Notifier):
         tempSLIPBuffer.append(SLIP_END)
         return tempSLIPBuffer
 
-    # This function uses getSerialByte() function to get SLIP encoded bytes from the serial port and return a decoded byte list
+    # This function uses getSerialByte() function to get SLIP encoded bytes from the serial port
+    # and return a decoded byte list
     # Based on https://github.com/mehdix/pyslip/
     def decodeFromSLIP(self, timeout=None):
         dataBuffer = []
@@ -158,9 +159,16 @@ class PacketReader(Notifications.Notifier):
 
     def handlePacketHistory(self, packet):
         # Reads and validates packet counter
-        if self.lastReceivedPacket and (packet.packetCounter != (self.lastReceivedPacket.packetCounter+1)) and (self.lastReceivedPacket.packetCounter != 0):
-            logging.info("gap in packets, between "+str(self.lastReceivedPacket.packetCounter) + " and " + str(packet.packetCounter) +
-                         " packet before: " + str(self.lastReceivedPacket.packetList) + " packet after: " + str(packet.packetList))
+        if self.lastReceivedPacket and (
+            packet.packetCounter != (self.lastReceivedPacket.packetCounter+1)) and (
+                self.lastReceivedPacket.packetCounter != 0):
+            logging.info("gap in packets, between {} and {}. packet before: {}, packet after: {}"
+                         .format(
+                             self.lastReceivedPacket.packetCounter,
+                             str(packet.packetCounter),
+                             str(self.lastReceivedPacket.packetList),
+                             str(packet.packetList)
+                         ))
         self.lastReceivedPacket = packet
 
     def getPacket(self, timeout=None):
@@ -235,14 +243,13 @@ class PacketReader(Notifications.Notifier):
 
         # comports = self.findSeggerComPorts().keys()
 
-        if self.portnum != None:
+        if self.portnum is not None:
             self.notify("INFO_PRESET")
         else:
             self.notify("INFO_NO_PRESET")
 
         readTimeout = 0.1
-        lastConfigComPort = self.portnum
-        iPort = self.portnum if self.portnum != None else 1
+        iPort = self.portnum if self.portnum is not None else 1
         while not foundPort and not self.exit:
 
             try:
@@ -255,7 +262,7 @@ class PacketReader(Notifications.Notifier):
                 while continueLoop and (time.time() < (startTime+1)):
                     packet = self.getPacket(timeout=readTimeout)
 
-                    if packet == None:
+                    if packet is None:
                         continueLoop = False
                         raise Exception("None packet")
                     elif packet.id == 0x0E:
@@ -275,21 +282,22 @@ class PacketReader(Notifications.Notifier):
             except Exception as e:
                 if "The system cannot find the file specified." not in str(e):
                     # logging.exception("Error on COM"+str(iPort+1)+": "+str(e))
-                    logging.info("Error on port "+str(iPort)+". file: "+os.path.basename(sys.exc_info()
-                                                                                         [2].tb_frame.f_code.co_filename)+", line "+str(sys.exc_info()[2].tb_lineno)+": "+str(e))
+                    logging.info("Error on port " + str(iPort) + ". file: " +
+                                 os.path.basename(sys.exc_info()[2].tb_frame.f_code.co_filename) +
+                                 ", line " + str(sys.exc_info()[2].tb_lineno) + ": "+str(e))
                     # logging.exception("error")
                 try:
                     self.uart.ser.close()
-                except:
+                except:  # noqa: E722
                     logging.exception("could not close UART")
 
-            if self.portnum == None:
+            if self.portnum is None:
                 if type(iPort) != int:
                     iPort = 0
                 iPort += 1
                 iPort = (iPort % 256)
 
-            if self.portnum != None or (iPort % 64) == 0:
+            if self.portnum is not None or (iPort % 64) == 0:
                 nTicks += 1
                 self.notify("DEVICE_DISCOVERY_TICK", {"tickNumber": nTicks})
                 if readTimeout < 3:
@@ -298,7 +306,7 @@ class PacketReader(Notifications.Notifier):
             # logging.info("iPort: " +str(iPort))
             # logging.info("self.portnum: " +str(self.portnum))
 
-            if self.portnum != None:
+            if self.portnum is not None:
                 time.sleep(0.7)
             else:
                 time.sleep(0.01)
@@ -321,7 +329,7 @@ class Packet:
             logging.error("Invalid packet: %s" % str(e))
             self.OK = False
             self.valid = False
-        except:
+        except:  # noqa: E722
             logging.exception("packet creation error")
             logging.info("packetList: " + str(packetList))
             self.OK = False
@@ -335,11 +343,6 @@ class Packet:
         self.payloadLength = packetList[PAYLOAD_LEN_POS]
         self.protover = packetList[PROTOVER_POS]
 
-    # def writeStaticHeader(self, packetList):
-        # packetList[HEADER_LEN_POS] = self.headerLength
-        # packetList[PAYLOAD_LEN_POS] = self.payloadLength
-        # packetList[PROTOVER_POS] = self.protover
-
     def readDynamicHeader(self, packetList):
         self.header = packetList[0:self.headerLength]
         if self.headerLength == HEADER_LENGTH:
@@ -348,11 +351,6 @@ class Packet:
             self.id = packetList[ID_POS]
         else:
             logging.info("incorrect header length: %d" % self.headerLength)
-
-    # def writeDynamicHeader(self, packetList):
-        # if self.headerLength == HEADER_LENGTH:
-            # packetList[PACKETCOUNTER_POS:PACKETCOUNTER_POS+2] = toLittleEndian(self.packetCounter, 2)
-            # packetList[ID_POS] = self.id
 
     def readPayload(self, packetList):
         self.blePacket = None
@@ -379,7 +377,8 @@ class Packet:
                         packetList[EVENTCOUNTER_POS:EVENTCOUNTER_POS+2])
                     self.timestamp = parseLittleEndian(packetList[TIMESTAMP_POS:TIMESTAMP_POS+2])
                     # self.payload = packetList[13:(4+self.length)]
-                    # The hardware adds a padding byte which isn't sent on air. The following removes it.
+                    # The hardware adds a padding byte which isn't sent on air.
+                    # The following removes it.
                     self.packetList.pop(BLEPACKET_POS+6)
                     self.payloadLength -= 1
                     if packetList[PAYLOAD_LEN_POS] > 0:
@@ -388,9 +387,9 @@ class Packet:
                 if self.OK:
                     try:
                         self.blePacket = BlePacket(packetList[BLEPACKET_POS:])
-                    except:
+                    except:  # noqa: E722
                         logging.exception("blePacket error")
-            except:
+            except:  # noqa: E722
                 # malformed packet
                 logging.exception("packet error")
                 self.OK = False
@@ -411,13 +410,6 @@ class Packet:
         self.OK = self.crcOK and (self.micOK or not self.encrypted)
 
     def getList(self):
-        # try:
-            # if self.id == EVENT_PACKET:
-                # return self.syncWord + [self.id] + [self.length] + [self.flags] + [self.channel] + [self.rawRSSI] + self.eventCounter + self.timestamp + self.payload
-            # else:
-                # return self.syncWord + [self.id] + [self.length] + self.payload
-        # except AttributeError:
-
         return self.packetList
 
     def asString(self):
@@ -429,7 +421,7 @@ class Packet:
                 return True
             else:
                 return False
-        except:
+        except:  # noqa: E722
             logging.exception("Invalid packet: %s" % str(packetList))
             return False
 
@@ -455,7 +447,8 @@ class BlePacket():
 
     def extractAdvAddress(self, packetList):
         addr = None
-        if (self.advType == 0 or self.advType == 1 or self.advType == 2 or self.advType == 4 or self.advType == 6):
+        if (self.advType == 0 or self.advType == 1 or self.advType == 2 or self.advType == 4
+           or self.advType == 6):
             addrType = not not packetList[4] & 64
             addr = packetList[6:12]
             addr.reverse()

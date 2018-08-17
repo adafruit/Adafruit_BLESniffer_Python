@@ -1,5 +1,9 @@
 from __future__ import absolute_import
+import sys
+import os
+import threading
 import logging
+from . import SnifferCollector
 from . import Logger, Version
 
 
@@ -11,12 +15,6 @@ def initLog():
 
 
 initLog()
-
-
-import sys
-import os
-import threading
-from . import SnifferCollector
 
 
 class Sniffer(threading.Thread, SnifferCollector.SnifferCollector):
@@ -46,7 +44,7 @@ class Sniffer(threading.Thread, SnifferCollector.SnifferCollector):
 
     # Signal the Sniffer firmware to sniff a specific device.
     # "device" argument is of type Device
-    # if "followOnlyAdvertisements" is True, the sniffer will not follow the device into a connection.
+    # if "followOnlyAdvertisements" is True the sniffer will not follow the device into a connection.  # noqa: E501
     # Returns nothing
     def follow(self, device=None, followOnlyAdvertisements=False):
         self._startFollowing(device, followOnlyAdvertisements)
@@ -88,7 +86,8 @@ class Sniffer(threading.Thread, SnifferCollector.SnifferCollector):
     def missedPackets(self):
         return self._missedPackets
 
-    # The number of packets which were sniffed in the last BLE connection. From CONNECT_REQ until link loss/termination.
+    # The number of packets which were sniffed in the last BLE connection.
+    # From CONNECT_REQ until link loss/termination.
     @property
     def packetsInLastConnection(self):
         return self._packetsInLastConnection
@@ -108,7 +107,8 @@ class Sniffer(threading.Thread, SnifferCollector.SnifferCollector):
     def inConnection(self):
         return self._inConnection
 
-    # The internal state of the sniffer. States are defined in SnifferCollector module. Valid values are 0-2.
+    # The internal state of the sniffer.
+    # States are defined in SnifferCollector module. Valid values are 0-2.
     @property
     def state(self):
         return self._state

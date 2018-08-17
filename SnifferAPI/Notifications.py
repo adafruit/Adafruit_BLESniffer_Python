@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 import threading
-import logging
 
 
 class Notification():
@@ -29,11 +28,6 @@ class Notifier():
             if callback not in self.getCallbacks(key):
                 self.getCallbacks(key).append(callback)
 
-    def unSubscribe(self, callback):
-        with self.callbackLock:
-            if callback in self.getCallbacks(key):
-                self.getCallbacks(key).remove(callback)
-
     def getCallbacks(self, key):
         with self.callbackLock:
             # logging.info(self.callbacks)
@@ -44,7 +38,7 @@ class Notifier():
     def notify(self, key=None, msg=None, notification=None):
         # logging.info(self.callbacks)
         with self.callbackLock:
-            if notification == None:
+            if notification is None:
                 notification = Notification(key, msg)
 
             for callback in self.getCallbacks(notification.key):

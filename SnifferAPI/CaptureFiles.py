@@ -136,7 +136,7 @@ def toString(myList):
             myString += chr(i)
         except ValueError:
             logging.exception("byte: %d, list: %s" % (i, str(myList)))
-        except:
+        except:  # noqa: E722
             logging.exception("byte: %d, list: %s" % (i, str(myList)))
             raise
     return myString

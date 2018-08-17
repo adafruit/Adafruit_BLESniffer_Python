@@ -59,7 +59,7 @@ def initLogger():
         logger.setLevel(logging.INFO)
 
         logFlusher = LogFlusher(logHandler)
-    except:
+    except:  # noqa: 722
         print("LOGGING FAILED")
         print(traceback.format_exc())
         raise
@@ -74,18 +74,19 @@ def shutdownLogger():
 def clearLog():
     try:
         logHandler.doRollover()
-    except:
+    except:  # noqa: 722
         print("LOGGING FAILED")
         raise
 
 
-# Returns the timestamp residing on the first line of the logfile. Used for checking the time of creation
+# Returns the timestamp residing on the first line of the logfile.
+# Used for checking the time of creation
 def getTimestamp():
     try:
         with open(logFileName, "r") as f:
             f.seek(0)
             return f.readline()
-    except:
+    except:  # noqa: 722
         print("LOGGING FAILED")
 
 
@@ -93,7 +94,7 @@ def addTimestamp():
     try:
         with open(logFileName, "a") as f:
             f.write(str(time.time()) + os.linesep)
-    except:
+    except:  # noqa: 722
         print("LOGGING FAILED")
 # Returns the entire content of the logfile. Used when sending emails
 
@@ -104,7 +105,7 @@ def readAll():
         with open(logFileName, "r") as f:
             text = f.read()
         return text
-    except:
+    except:  # noqa: 722
         print("LOGGING FAILED")
 
 
@@ -114,7 +115,7 @@ class MyRotatingFileHandler(logHandlers.RotatingFileHandler):
             logHandlers.RotatingFileHandler.doRollover(self)
             addTimestamp()
             self.maxBytes = myMaxBytes
-        except:
+        except:  # noqa: 722
             # There have been permissions issues with the log files.
             self.maxBytes += int(myMaxBytes/2)
             # logging.exception("log rollover error")

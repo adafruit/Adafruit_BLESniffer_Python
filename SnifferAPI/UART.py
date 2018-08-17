@@ -75,7 +75,7 @@ class Uart:
                 logging.error("Error setting UART write timeout. Continuing.")
         try:
             nBytes = self.ser.write(array)
-        except:
+        except:  # noqa: E722
             self.ser.close()
             raise
 

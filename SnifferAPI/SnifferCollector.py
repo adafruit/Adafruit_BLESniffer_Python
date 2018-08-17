@@ -1,10 +1,6 @@
 from __future__ import absolute_import
 from . import Packet, Exceptions, CaptureFiles, Devices, Notifications, Version
-import time
-import sys
 import threading
-import subprocess
-import os
 import logging
 import copy
 from serial import SerialException
@@ -139,11 +135,12 @@ class SnifferCollector(Notifications.Notifier):
                             or packet.blePacket.advType == 2
                             or packet.blePacket.advType == 4
                             or packet.blePacket.advType == 6
-                            ) and (packet.blePacket.advAddress != None
+                            ) and (packet.blePacket.advAddress is not None
                                    ) and (packet.crcOK and not packet.direction):
 
                             newDevice = Devices.Device(
-                                address=packet.blePacket.advAddress, name=packet.blePacket.name, RSSI=packet.RSSI, txAdd=packet.txAdd)
+                                address=packet.blePacket.advAddress, name=packet.blePacket.name,
+                                RSSI=packet.RSSI, txAdd=packet.txAdd)
                             self._devices.appendOrUpdate(newDevice)
 
             except Exception as e:
@@ -177,8 +174,9 @@ class SnifferCollector(Notifications.Notifier):
                 elif packet.id == EVENT_CONNECT:
                     self._connectEventPacketCounterValue = packet.packetCounter
                     self._inConnection = True
+                    # copy it because packets are eventually deleted
                     self._currentConnectRequest = copy.copy(self._findPacketByPacketCounter(
-                        self._connectEventPacketCounterValue-1))  # copy it because packets are eventually deleted
+                        self._connectEventPacketCounterValue-1))
                 elif packet.id == EVENT_DISCONNECT:
                     if self._inConnection:
                         self._packetsInLastConnection = packet.packetCounter - \
