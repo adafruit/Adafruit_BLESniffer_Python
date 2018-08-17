@@ -1,5 +1,12 @@
-import time, os, logging, traceback, threading
+from __future__ import absolute_import
+from __future__ import print_function
+import time
+import os
+import logging
+import traceback
+import threading
 import logging.handlers as logHandlers
+from six.moves import range
 
 #################################################################
 # This file contains the logger. To log a line, simply write     #
@@ -12,9 +19,10 @@ import logging.handlers as logHandlers
 #################################################################
 
 try:
-	logFilePath=os.path.join(os.getenv('appdata'), 'Nordic Semiconductor', 'Sniffer', 'logs')
+    logFilePath = os.path.join(
+        os.getenv('appdata'), 'Nordic Semiconductor', 'Sniffer', 'logs')
 except AttributeError:
-	logFilePath="logs"
+    logFilePath = "logs"
 
 logFileName = os.path.join(logFilePath, 'log.txt')
 
@@ -25,45 +33,52 @@ myMaxBytes = 1000000
 
 # Ensure that the directory we are writing the log file to exists.
 # Create our logfile, and write the timestamp in the first line.
+
+
 def initLogger():
     try:
         # First, make sure that the directory exists
         if not os.path.isdir(logFilePath):
             os.makedirs(logFilePath)
-            
+
         # If the file does not exist, create it, and save the timestamp
         if not os.path.isfile(logFileName):
             with open(logFileName, "wb") as f:
                 f.write(str(time.time()) + os.linesep)
-                
+
         global logHandler
         global logFlusher
-                
-        logHandler = MyRotatingFileHandler(logFileName, mode='a', maxBytes=myMaxBytes, backupCount=3)
-        logFormatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s', datefmt='%d-%b-%Y %H:%M:%S (%z)')
+
+        logHandler = MyRotatingFileHandler(
+            logFileName, mode='a', maxBytes=myMaxBytes, backupCount=3)
+        logFormatter = logging.Formatter(
+            '%(asctime)s %(levelname)s: %(message)s', datefmt='%d-%b-%Y %H:%M:%S (%z)')
         logHandler.setFormatter(logFormatter)
         logger = logging.getLogger()
         logger.addHandler(logHandler)
         logger.setLevel(logging.INFO)
-        
+
         logFlusher = LogFlusher(logHandler)
     except:
-        print "LOGGING FAILED"
-        print traceback.format_exc()
+        print("LOGGING FAILED")
+        print(traceback.format_exc())
         raise
-        
+
+
 def shutdownLogger():
     logging.shutdown()
 
 # Clear the log (typically after it has been sent on email)
+
+
 def clearLog():
     try:
         logHandler.doRollover()
     except:
-        print "LOGGING FAILED"
+        print("LOGGING FAILED")
         raise
 
-        
+
 # Returns the timestamp residing on the first line of the logfile. Used for checking the time of creation
 def getTimestamp():
     try:
@@ -71,15 +86,18 @@ def getTimestamp():
             f.seek(0)
             return f.readline()
     except:
-        print "LOGGING FAILED"
+        print("LOGGING FAILED")
+
 
 def addTimestamp():
     try:
         with open(logFileName, "a") as f:
             f.write(str(time.time()) + os.linesep)
     except:
-        print "LOGGING FAILED"
+        print("LOGGING FAILED")
 # Returns the entire content of the logfile. Used when sending emails
+
+
 def readAll():
     try:
         text = ""
@@ -87,8 +105,9 @@ def readAll():
             text = f.read()
         return text
     except:
-        print "LOGGING FAILED"
-        
+        print("LOGGING FAILED")
+
+
 class MyRotatingFileHandler(logHandlers.RotatingFileHandler):
     def doRollover(self):
         try:
@@ -99,32 +118,33 @@ class MyRotatingFileHandler(logHandlers.RotatingFileHandler):
             # There have been permissions issues with the log files.
             self.maxBytes += int(myMaxBytes/2)
             # logging.exception("log rollover error")
-        
+
+
 class LogFlusher(threading.Thread):
     def __init__(self, logHandler):
         threading.Thread.__init__(self)
-        
+
         self.daemon = True
         self.handler = logHandler
         self.exit = False
-        
+
         self.start()
-        
+
     def run(self):
         while not self.exit:
             time.sleep(10)
             self.doFlush()
-            
+
     def doFlush(self):
         self.handler.flush()
         os.fsync(self.handler.stream.fileno())
-        
+
     def stop(self):
         self.exit = True
-        
-        
+
+
 if __name__ == '__main__':
     initLogger()
     for i in range(50):
         logging.info("test log no. "+str(i))
-        print "test log no. ", i
+        print("test log no. ", i)
