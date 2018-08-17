@@ -44,7 +44,7 @@ def initLogger():
         # If the file does not exist, create it, and save the timestamp
         if not os.path.isfile(logFileName):
             with open(logFileName, "wb") as f:
-                f.write(str(time.time()) + os.linesep)
+                f.write('{0}{1}'.format(time.time(), os.linesep).encode())
 
         global logHandler
         global logFlusher

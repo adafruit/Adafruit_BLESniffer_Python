@@ -42,11 +42,7 @@ class DeviceList(Notifications.Notifier):
                 # self.updateDeviceDisplay()
 
     def append(self, device):
-        # self.devices[listToString(device.addr)] = device
         self.devices.append(device)
-        # if len(self.devices) ==  1:
-        # self.devices[0].selected = True
-
         self.notify("DEVICE_ADDED", device)
 
     def find(self, id):
@@ -126,10 +122,3 @@ class Device:
 
     def __repr__(self):
         return 'BLE device "'+self.name+'" ('+str(self.address)+')'
-
-
-def listToString(list):
-    str = ""
-    for i in list:
-        str += chr(i)
-    return str

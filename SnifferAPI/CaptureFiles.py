@@ -60,7 +60,7 @@ class CaptureFileHandler:
 
     def startNewFile(self):
         with open(self.filename, "wb") as f:
-            f.write(toString(globalHeaderString))
+            f.write(bytearray(globalHeaderString))
 
     def doRollover(self):
         try:
@@ -91,7 +91,7 @@ class CaptureFileHandler:
             f.write(msgString)
 
     def writeList(self, msgList):
-        self.writeString(toString(msgList))
+        self.writeString(bytearray(msgList))
 
     def writePacketList(self, packetList):
         self.writeList(self.makePacketHeader(len(packetList)) + packetList)
@@ -127,19 +127,6 @@ class CaptureFileHandler:
             ((ORIG_LENGTH >> 24) & 0xFF)
         ]
         return headerString
-
-
-def toString(myList):
-    myString = ""
-    for i in myList:
-        try:
-            myString += chr(i)
-        except ValueError:
-            logging.exception("byte: %d, list: %s" % (i, str(myList)))
-        except:  # noqa: E722
-            logging.exception("byte: %d, list: %s" % (i, str(myList)))
-            raise
-    return myString
 
 
 def toList(myString):

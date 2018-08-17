@@ -53,7 +53,7 @@ class Uart:
                 "UART read timeout (" + str(self.ser.timeout) + " seconds).")
 
         if self.useByteQueue:
-            self.byteQueue.extend(stringToList(value))
+            self.byteQueue.extend(value)
         return value
 
     def readByte(self, timeout=None):
@@ -85,21 +85,3 @@ class Uart:
 def list_serial_ports():
     # Scan for available ports.
     return list_ports.comports()
-
-# Convert a list of ints (bytes) into an ASCII string
-
-
-def listToString(list):
-    str = ""
-    for i in list:
-        str += chr(i)
-    return str
-
-# Convert an ASCII string into a list of ints (bytes)
-
-
-def stringToList(str):
-    lst = []
-    for c in str:
-        lst += [ord(c)]
-    return lst

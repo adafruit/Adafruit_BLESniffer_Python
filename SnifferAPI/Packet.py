@@ -193,9 +193,9 @@ class PacketReader(Notifications.Notifier):
     def sendPacket(self, id, payload, timeout=None):
         packetList = [HEADER_LENGTH] + [len(payload)] + [PROTOVER] + \
             toLittleEndian(self.packetCounter, 2) + [id] + payload
-        packetString = listToString(self.encodeToSLIP(packetList))
+        pkt = self.encodeToSLIP(packetList)
         self.packetCounter += 1
-        self.uart.writeList(packetString, timeout)
+        self.uart.writeList(pkt, timeout)
 
     def sendScan(self, timeout=None):
         self.sendPacket(REQ_SCAN_CONT, [], timeout)
@@ -412,9 +412,6 @@ class Packet:
     def getList(self):
         return self.packetList
 
-    def asString(self):
-        return listToString(self.getList())
-
     def validatePacketList(self, packetList):
         try:
             if (packetList[PAYLOAD_LEN_POS] + packetList[HEADER_LEN_POS]) == len(packetList):
@@ -485,13 +482,6 @@ class BlePacket():
     def extractLength(self, packetList):
         length = packetList[5]
         self.length = length
-
-
-def listToString(list):
-    str = ""
-    for i in list:
-        str += chr(i)
-    return str
 
 
 def parseLittleEndian(list):
