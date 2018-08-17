@@ -1,5 +1,7 @@
-import Notifications
+from __future__ import absolute_import
+from . import Notifications
 import logging
+
 
 class DeviceList(Notifications.Notifier):
     def __init__(self, *args, **kwargs):
@@ -7,46 +9,42 @@ class DeviceList(Notifications.Notifier):
         logging.info("args: " + str(args))
         logging.info("kwargs: " + str(kwargs))
         self.devices = []
-    
+
     def __len__(self):
         return len(self.devices)
-        
+
     def __repr__(self):
         return "Sniffer Device List: "+str(self.asList())
-        
+
     def clear(self):
         self.devices = []
-    
+
     def appendOrUpdate(self, newDevice):
         existingDevice = self.find(newDevice)
-        
+
         # logging.info("appendOrUpdate")
-        
+
         # Add device to the list of devices being displayed, but only if CRC is OK
-        if existingDevice == None:
+        if existingDevice is None:
             self.append(newDevice)
         else:
             updated = False
             if (newDevice.name != "") and (existingDevice.name == ""):
                 existingDevice.name = newDevice.name
                 updated = True
-                
-            if (newDevice.RSSI < (newDevice.RSSI - 5)) or (existingDevice.RSSI > (newDevice.RSSI+2)):
+
+            if (newDevice.RSSI < (newDevice.RSSI - 5)) or (existingDevice.RSSI > (newDevice.RSSI+2)):  # noqa: E501
                 existingDevice.RSSI = newDevice.RSSI
                 updated = True
-                
+
             if updated:
                 self.notify("DEVICE_UPDATED", existingDevice)
                 # self.updateDeviceDisplay()
-    
+
     def append(self, device):
-        # self.devices[listToString(device.addr)] = device
         self.devices.append(device)
-        # if len(self.devices) ==  1:
-            # self.devices[0].selected = True
-        
         self.notify("DEVICE_ADDED", device)
-        
+
     def find(self, id):
         # logging.info("find type: %s" % str(id.__class__.__name__))
         if type(id) == list:
@@ -65,7 +63,7 @@ class DeviceList(Notifications.Notifier):
         return None
 
     def remove(self, id):
-        if type(id) == list: #address
+        if type(id) == list:  # address
             device = self.devices.pop(self.devices.index(self.find(id)))
         elif type(id) == int:
             device = self.devices.pop(id)
@@ -73,16 +71,16 @@ class DeviceList(Notifications.Notifier):
             device = self.devices.pop(self.devices.index(self.find(id.address)))
         self.notify("DEVICE_REMOVED", device)
         # self.updateDeviceDisplay()
-        
+
     # def getSelected(self):
         # for dev in self.devices:
-            # if dev.selected:
-                # return dev
+        # if dev.selected:
+        # return dev
         # if len(self.devices) ==  1:
-            # self.devices[0].selected = True
+        # self.devices[0].selected = True
         # else:
-            # return None
-            
+        # return None
+
     def index(self, device):
         index = 0
         for dev in self.devices:
@@ -90,44 +88,37 @@ class DeviceList(Notifications.Notifier):
                 return index
             index += 1
         return None
-        
+
     # def setSelected(self, device):
         # if device in self.devices:
-            # for dev in self.devices:
-                # dev.selected = False
+        # for dev in self.devices:
+        # dev.selected = False
         # device.selected = True
         # self.notify("DEVICE_SELECTED", device)
-            
+
     def setFollowed(self, device):
         if device in self.devices:
             for dev in self.devices:
                 dev.followed = False
             device.followed = True
         self.notify("DEVICE_FOLLOWED", device)
-        
+
     # def incrementSelected(self, step = 1):
         # if len(self.devices) > 0:
-            # self.setSelected(self.find((self.index(self.getSelected())+step)%len(self.devices)))
-            
+        # self.setSelected(self.find((self.index(self.getSelected())+step)%len(self.devices)))
+
     def asList(self):
         return self.devices[:]
-        
 
 
 class Device:
-    def __init__(self, address, name, RSSI, txAdd = 1):
+    def __init__(self, address, name, RSSI, txAdd=1):
         self.address = address
         self.txAdd = txAdd
         self.name = name
         self.RSSI = RSSI
         # self.selected = selected
         self.followed = False
-    
+
     def __repr__(self):
         return 'BLE device "'+self.name+'" ('+str(self.address)+')'
-            
-def listToString(list):
-    str = ""
-    for i in list:
-        str+=chr(i)
-    return str

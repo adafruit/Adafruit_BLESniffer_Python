@@ -1,7 +1,10 @@
-__author__    = "ktown"
+from __future__ import absolute_import
+from __future__ import print_function
+from six.moves import input
+__author__ = "ktown"
 __copyright__ = "Copyright Adafruit Industries 2014 (adafruit.com)"
-__license__   = "MIT"
-__version__   = "0.1.0"
+__license__ = "MIT"
+__version__ = "0.1.0"
 
 import os
 import sys
@@ -30,7 +33,7 @@ def setup(serport, delay=6):
     global mySniffer
 
     # Initialize the device on the specified serial port
-    print "Connecting to sniffer on " + serport
+    print("Connecting to sniffer on " + serport)
     mySniffer = Sniffer.Sniffer(serport)
     # Start the sniffer
     mySniffer.start()
@@ -46,7 +49,7 @@ def scanForDevices(scantime=5):
     @rtype: DeviceList
     """
     if args.verbose:
-        print "Starting BLE device scan ({0} seconds)".format(str(scantime))
+        print("Starting BLE device scan ({0} seconds)".format(str(scantime)))
 
     mySniffer.scan()
     time.sleep(scantime)
@@ -65,21 +68,21 @@ def selectDevice(devlist):
     count = 0
 
     if len(devlist):
-        print "Found {0} BLE devices:\n".format(str(len(devlist)))
+        print("Found {0} BLE devices:\n".format(str(len(devlist))))
         # Display a list of devices, sorting them by index number
         for d in devlist.asList():
             """@type : Device"""
             count += 1
-            print "  [{0}] {1} ({2}:{3}:{4}:{5}:{6}:{7}, RSSI = {8})".format(count, d.name,
+            print("  [{0}] {1} ({2}:{3}:{4}:{5}:{6}:{7}, RSSI = {8})".format(count, d.name,
                                                                              "%02X" % d.address[0],
                                                                              "%02X" % d.address[1],
                                                                              "%02X" % d.address[2],
                                                                              "%02X" % d.address[3],
                                                                              "%02X" % d.address[4],
                                                                              "%02X" % d.address[5],
-                                                                             d.RSSI)
+                                                                             d.RSSI))
         try:
-            i = int(raw_input("\nSelect a device to sniff, or '0' to scan again\n> "))
+            i = int(input("\nSelect a device to sniff, or '0' to scan again\n> "))
         except KeyboardInterrupt:
             raise KeyboardInterrupt
             return None
@@ -105,18 +108,19 @@ def dumpPackets():
             if packet.blePacket is not None:
                 # Display the raw BLE packet payload
                 # Note: 'BlePacket' is nested inside the higher level 'Packet' wrapper class
-                print packet.blePacket.payload
+                print(packet.blePacket.payload)
             else:
-                print packet
+                print(packet)
     else:
-        print '.' * len(packets)
+        print('.' * len(packets))
 
 
 if __name__ == '__main__':
     """Main program execution point"""
 
     # Instantiate the command line argument parser
-    argparser = argparse.ArgumentParser(description="Interacts with the Bluefruit LE Friend Sniffer firmware")
+    argparser = argparse.ArgumentParser(
+        description="Interacts with the Bluefruit LE Friend Sniffer firmware")
 
     # Add the individual arguments
     # Mandatory arguments:
@@ -149,7 +153,7 @@ if __name__ == '__main__':
     args = argparser.parse_args()
 
     # Display the libpcap logfile location
-    print "Capturing data to " + args.logfile
+    print("Capturing data to " + args.logfile)
     CaptureFiles.captureFilePath = args.logfile
 
     # Try to open the serial port
@@ -157,22 +161,22 @@ if __name__ == '__main__':
         setup(args.serialport)
     except OSError:
         # pySerial returns an OSError if an invalid port is supplied
-        print "Unable to open serial port '" + args.serialport + "'"
+        print("Unable to open serial port '" + args.serialport + "'")
         sys.exit(-1)
     except KeyboardInterrupt:
         sys.exit(-1)
 
     # Optionally display some information about the sniffer
     if args.verbose:
-        print "Sniffer Firmware Version: " + str(mySniffer.swversion)
+        print("Sniffer Firmware Version: " + str(mySniffer.swversion))
 
     # Scan for devices in range until the user makes a selection
     try:
         d = None
         """@type: Device"""
         if args.target:
-            print "specified target device", args.target
-            _mac = map(lambda x: int(x, 16) , args.target.split(':'))
+            print("specified target device", args.target)
+            _mac = [int(x, 16) for x in args.target.split(':')]
             if len(_mac) != 6:
                 raise ValueError("Invalid device address")
             # -72 seems reasonable for a target device right next to the sniffer
@@ -180,24 +184,24 @@ if __name__ == '__main__':
 
         # loop will be skipped if a target device is specified on commandline
         while d is None:
-            print "Scanning for BLE devices (5s) ..."
+            print("Scanning for BLE devices (5s) ...")
             devlist = scanForDevices()
             if len(devlist):
                 # Select a device
                 d = selectDevice(devlist)
 
         # Start sniffing the selected device
-        print "Attempting to follow device {0}:{1}:{2}:{3}:{4}:{5}".format("%02X" % d.address[0],
+        print("Attempting to follow device {0}:{1}:{2}:{3}:{4}:{5}".format("%02X" % d.address[0],
                                                                            "%02X" % d.address[1],
                                                                            "%02X" % d.address[2],
                                                                            "%02X" % d.address[3],
                                                                            "%02X" % d.address[4],
-                                                                           "%02X" % d.address[5])
+                                                                           "%02X" % d.address[5]))
         # Make sure we actually followed the selected device (i.e. it's still available, etc.)
         if d is not None:
             mySniffer.follow(d)
         else:
-            print "ERROR: Could not find the selected device"
+            print("ERROR: Could not find the selected device")
 
         # Dump packets
         while True:
@@ -211,6 +215,6 @@ if __name__ == '__main__':
     except (KeyboardInterrupt, ValueError, IndexError) as e:
         # Close gracefully on CTRL+C
         if 'KeyboardInterrupt' not in str(type(e)):
-            print "Caught exception:", e
+            print("Caught exception:", e)
         mySniffer.doExit()
         sys.exit(-1)
